@@ -2,7 +2,7 @@
 				Dev:       {{.Dev}},       
 				Ino:	   {{.Ino}},    
 				Nlink:	   {{.Nlink}},
-				Mode:	   {{.Mode}},	
+				Mode:	   {{printf "%X" .Mode}},	
 				Uid:	   {{.Uid}},
 				Gid:	   {{.Gid}},
 				Rdev:	   {{.Rdev}},
@@ -18,8 +18,8 @@
 var testFS = fstest.MapFS{
 	{{range . }}
 		"{{.Path}}":  &fstest.MapFile{
-			ModTime: time.Unix({{.Info.ModTime.Unix}}, 0),
-			Mode: fs.FileMode({{AsOct .Info.Mode}}),
+			ModTime: {{AsDate .Info.ModTime}},
+			Mode: fs.FileMode({{AsMode .Info.Mode}}),
 			Sys: {{with AsStat .Info.Sys}}{{ template "stat_t" .}}{{end}}
 		},
 	{{ end }}
