@@ -1,0 +1,28 @@
+{{define "stat_t"}}&syscall.Stat_t{
+				Dev:       {{.Dev}},       
+				Ino:	   {{.Ino}},    
+				Nlink:	   {{.Nlink}},
+				Mode:	   {{.Mode}},	
+				Uid:	   {{.Uid}},
+				Gid:	   {{.Gid}},
+				Rdev:	   {{.Rdev}},
+				Size:      {{.Size}},
+				Blksize:   {{.Blksize}},
+				Blocks:    {{.Blocks}},
+				Atim:      {{template "timespec" .Atim}},
+				Mtim:      {{template "timespec" .Mtim}},
+				Ctim:      {{template "timespec" .Ctim}},
+			},{{end}}
+{{define "timespec"}}syscall.Timespec{Sec:  {{.Sec}},Nsec: {{.Nsec}}}{{end}}
+{{define "testfs"}}
+var testFS = fstest.MapFS{
+	{{range . }}
+		"{{.Path}}":  &fstest.MapFile{
+			ModTime: time.Unix({{.Info.ModTime.Unix}}, 0),
+			Mode: fs.FileMode({{AsOct .Info.Mode}}),
+			Sys: {{with AsStat .Info.Sys}}{{ template "stat_t" .}}{{end}}
+		},
+	{{ end }}
+}
+{{end}}
+{{template "testfs" .}}
