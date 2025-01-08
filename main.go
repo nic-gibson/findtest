@@ -41,7 +41,7 @@ func main() {
 	}
 
 	tmpl, err := template.New("fst").Funcs(template.FuncMap{
-		"AsMode": AsMode, "AsStat": AsStat, "AsDate": AsDate}).Parse(string(fstemplate))
+		"AsMode": AsMode, "AsStat": AsStat, "AsTime": AsTime}).Parse(string(fstemplate))
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func walker(path string, info fs.DirEntry, err error) error {
 }
 
 func AsMode(val fs.FileMode) string {
-	modeName := "0"
+	modeName := ""
 	mode := val & fs.ModeType
 	switch mode {
 	case fs.ModeDir:
@@ -88,11 +88,16 @@ func AsMode(val fs.FileMode) string {
 		modeName = "fs.ModeIrregular"
 	}
 
-	return fmt.Sprintf("%s | %O", modeName, val&fs.ModePerm)
+	if modeName == "" {
+		return fmt.Sprintf("%O", val&fs.ModePerm)
+	} else {
+		return fmt.Sprintf("%s | %O", modeName, val&fs.ModePerm)
+	}
+
 }
 
-func AsDate(val time.Time) string {
-	return fmt.Sprintf("time.Date(%d, %d, %d, %d, %d, %d, %d, time.UTC)", val.Year(), val.Month(), val.Day(), val.Hour(), val.Minute(), val.Second(), val.Nanosecond())
+func AsTime(secs int64) time.Time {
+	return time.Unix(secs, 0)
 }
 
 func AsStat(val any) *syscall.Stat_t {

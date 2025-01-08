@@ -2,7 +2,7 @@
 				Dev:           {{.Dev}},       
 				Ino:	       {{.Ino}},    
 				Nlink:	       {{.Nlink}},
-				Mode:	       {{printf "%X" .Mode}},	
+				Mode:	       {{printf "0X%X" .Mode}},	
 				Uid:	       {{.Uid}},
 				Gid:	       {{.Gid}},
 				Rdev:	       {{.Rdev}},
@@ -10,16 +10,17 @@
 				Blksize:       {{.Blksize}},
 				Blocks:        {{.Blocks}},
 				Atimespec:     {{template "timespec" .Atimespec}},
-				Mtimspec:      {{template "timespec" .Mtimespec}},
-				Ctimspec:      {{template "timespec" .Ctimespec}},
+				Mtimespec:      {{template "timespec" .Mtimespec}},
+				Ctimespec:      {{template "timespec" .Ctimespec}},
 				Birthtimespec: {{template "timespec" .Birthtimespec}},
 			},{{end}}
-{{define "timespec"}}syscall.Timespec{Sec:  {{.Sec}},Nsec: {{.Nsec}}}{{end}}
+{{define "time"}}time.Date({{.Year}}, time.{{.Month}}, {{.Day}}, {{.Hour}}, {{.Minute}}, {{.Second}}, 0, time.UTC){{end}}
+{{define "timespec"}}syscall.Timespec{Sec: {{with AsTime .Sec}}{{template "time" .}}{{end}}.Unix()}{{end}}
 {{define "testfs"}}
 var testFS = fstest.MapFS{
 	{{range . }}
 		"{{.Path}}":  &fstest.MapFile{
-			ModTime: {{AsDate .Info.ModTime}},
+			ModTime: {{template "time" .Info.ModTime}},
 			Mode: fs.FileMode({{AsMode .Info.Mode}}),
 			Sys: {{with AsStat .Info.Sys}}{{ template "stat_t" .}}{{end}}
 		},

@@ -2,7 +2,7 @@
 				Dev:       {{.Dev}},       
 				Ino:	   {{.Ino}},    
 				Nlink:	   {{.Nlink}},
-				Mode:	   {{printf "%X" .Mode}},	
+				Mode:	   {{printf "0X%X" .Mode}},	
 				Uid:	   {{.Uid}},
 				Gid:	   {{.Gid}},
 				Rdev:	   {{.Rdev}},
@@ -14,11 +14,12 @@
 				Ctim:      {{template "timespec" .Ctim}},
 			},{{end}}
 {{define "timespec"}}syscall.Timespec{Sec:  {{.Sec}},Nsec: {{.Nsec}}}{{end}}
+{{define "time"}}time.Date({{.Year}}, {{.Month}}, {{.Day}}, {{.Hour}}, {{.Min}}, {{.Sec}}, 0, time.UTC){{end}}
 {{define "testfs"}}
 var testFS = fstest.MapFS{
 	{{range . }}
 		"{{.Path}}":  &fstest.MapFile{
-			ModTime: {{AsDate .Info.ModTime}},
+			ModTime: {{template "time" .Info.ModTime}},
 			Mode: fs.FileMode({{AsMode .Info.Mode}}),
 			Sys: {{with AsStat .Info.Sys}}{{ template "stat_t" .}}{{end}}
 		},
