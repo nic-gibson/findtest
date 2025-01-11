@@ -20,6 +20,7 @@
 var testFS = fstest.MapFS{
 	{{range . }}
 		"{{.Path}}":  &fstest.MapFile{
+			Data:  {{FormatData .Data}},
 			ModTime: {{template "time" .Info.ModTime}},
 			Mode: fs.FileMode({{AsMode .Info.Mode}}),
 			Sys: {{with AsStat .Info.Sys}}{{ template "stat_t" .}}{{end}}

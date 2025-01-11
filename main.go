@@ -6,15 +6,19 @@ import (
 	"io/fs"
 	"os"
 	"runtime"
+	"strings"
 	"syscall"
 	"text/template"
 	"time"
 )
 
 type FindResult struct {
+	Data []byte
 	Path string
 	Info fs.FileInfo
 }
+
+var dirFS fs.ReadFileFS
 
 var results []FindResult = []FindResult{}
 
@@ -33,7 +37,7 @@ func main() {
 	}
 
 	rootpath := "testdata"
-	dirFS := os.DirFS(".")
+	dirFS = os.DirFS(".").(fs.ReadFileFS)
 
 	err = fs.WalkDir(dirFS, rootpath, walker)
 	if err != nil {
@@ -41,7 +45,7 @@ func main() {
 	}
 
 	tmpl, err := template.New("fst").Funcs(template.FuncMap{
-		"AsMode": AsMode, "AsStat": AsStat, "AsTime": AsTime}).Parse(string(fstemplate))
+		"AsMode": AsMode, "AsStat": AsStat, "AsTime": AsTime, "FormatData": FormatData}).Parse(string(fstemplate))
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +68,15 @@ func walker(path string, info fs.DirEntry, err error) error {
 		return err
 	}
 
-	results = append(results, FindResult{Path: path, Info: fsinfo})
+	data := make([]byte, 0)
+	if info.Type().IsRegular() {
+		data, err = dirFS.ReadFile(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	results = append(results, FindResult{Data: data, Path: path, Info: fsinfo})
 	return nil
 }
 
@@ -106,4 +118,15 @@ func AsStat(val any) *syscall.Stat_t {
 	} else {
 		return nil
 	}
+}
+
+func FormatData(data []byte) string {
+	if len(data) == 0 {
+		return "[]byte{}"
+	}
+	chars := make([]string, len(data))
+	for n, v := range data {
+		chars[n] = fmt.Sprintf("0x%x", v)
+	}
+	return "[]byte{" + strings.Join(chars, ", ") + "}"
 }
